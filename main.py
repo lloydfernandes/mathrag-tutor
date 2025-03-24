@@ -1,6 +1,6 @@
 # Streamlit Math RAG Tutor (local-only)
 
-import os
+import os   
 import streamlit as st
 import chromadb
 from chromadb.utils import embedding_functions
@@ -12,6 +12,7 @@ from langchain.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.schema import Document
 from glob import glob
+from langchain.prompts import PromptTemplate
 
 st.set_page_config(page_title="Local Math Tutor", page_icon="📚")
 st.title("📚 Local Math Tutor (Offline RAG)")
@@ -43,18 +44,33 @@ if not os.path.exists(chroma_path):
 else:
     vectordb = Chroma(persist_directory=chroma_path, embedding_function=embedding_model)
 
-# Step 5: Set up RAG chain with Ollama (local model)
+# Step 5: Set up RAG chain with custom prompt to use context only
+custom_prompt = PromptTemplate.from_template("""
+You are a helpful and obedient math tutor. You must ONLY use the provided context to answer the question.
+If the answer is not in the context, say \"I don't know.\"
+
+<context>
+{context}
+</context>
+
+Question: {question}
+Answer:
+""")
+
 llm = Ollama(model="mistral")
-rag_chain = RetrievalQA.from_chain_type(llm=llm, retriever=vectordb.as_retriever(), return_source_documents=True)
+rag_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=vectordb.as_retriever(),
+    chain_type="stuff",
+    chain_type_kwargs={"prompt": custom_prompt},
+    return_source_documents=True
+)
 
 # Step 6: Streamlit input form
 query = st.text_input("Ask a math question:", placeholder="e.g., A boy had 5 candies and ate 2. How many are left?")
 
 if query:
     result = rag_chain.invoke({"query": query})
-    st.subheader("🔍 RAW Retrieved Text (Debug Mode)")
-    for doc in result["source_documents"]:
-        st.code(doc.page_content[:500])
     st.subheader("🧠 Answer")
     st.write(result['result'])
 
