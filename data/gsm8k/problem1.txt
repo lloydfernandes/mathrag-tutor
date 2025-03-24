@@ -1,0 +1,3 @@
+Question: If there are 3 apples and you buy 4 more, how many apples do you have?
+
+Answer: 3 + 4 = 7. You have 7 apples.
