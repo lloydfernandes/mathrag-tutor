@@ -18,7 +18,7 @@ st.set_page_config(page_title="Local Math Tutor", page_icon="📚")
 st.title("📚 Local Math Tutor (Offline RAG)")
 st.markdown("Ask a math question. It will retrieve examples from your local dataset and generate a helpful answer using a local LLM (via Ollama). 🧠")
 
-# Step 1: Load GSM8K Data (or your own dataset)
+# Step 1: Relpace with GSM8K Data - For now its just basic test data
 @st.cache_resource
 def load_math_dataset(path="./data/gsm8k"):
     docs = []
