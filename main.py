@@ -4,6 +4,7 @@ import streamlit as st
 from agents.explainer import ExplainerAgent
 from agents.grader import GraderAgent
 from agents.supervisor import SupervisorAgent
+from agents.memory_agent import MemoryAgent
 from practice.practice import PracticeAgent
 from practice.session_tracker import SessionTracker
 
@@ -82,22 +83,27 @@ if ("supervisor" not in st.session_state or
         return_source_documents=True
     )
 
-    explainer = ExplainerAgent(rag_chain)
+    explainer = ExplainerAgent(rag_chain, llm)
     grader = GraderAgent()
     supervisor = SupervisorAgent(explainer, grader)
     practice_agent = PracticeAgent(documents, grader)
     tracker = SessionTracker()
+    memory = MemoryAgent(tracker)
 
     st.session_state.supervisor = supervisor
     st.session_state.practice_agent = practice_agent
     st.session_state.tracker = tracker
+    st.session_state.memory = memory
+    st.session_state.explainer = explainer
     st.session_state.active_dataset = dataset_option
 
 supervisor = st.session_state.supervisor
 practice_agent = st.session_state.practice_agent
 tracker = st.session_state.tracker
+memory = st.session_state.memory
+explainer = st.session_state.explainer
 
-mode = st.radio("Select mode:", ["Explain", "Grade", "Practice", "Session Log"])
+mode = st.radio("Select mode:", ["Explain", "Grade", "Practice", "Progress", "Session Log"])
 
 if mode == "Explain":
     question = st.text_input("Enter a math question:")
@@ -148,7 +154,8 @@ elif mode == "Practice":
 
     if st.button("Submit Answer") and student_input:
         feedback, correct = practice_agent.grade_answer(current_q['question'], student_input)
-        tracker.log_attempt(current_q['question'], student_input, correct, feedback)
+        topic = explainer.classify_topic(current_q['question'])
+        tracker.log_attempt(current_q['question'], student_input, correct, feedback, topic)
         st.session_state.practice_feedback = feedback
 
     if st.session_state.get("practice_feedback"):
@@ -157,6 +164,29 @@ elif mode == "Practice":
 
     correct, total = tracker.get_score()
     st.caption(f"📊 Score: {correct}/{total} correct")
+
+elif mode == "Progress":
+    st.subheader("📈 Session Progress")
+    stats = memory.get_session_stats()
+    st.write(stats)
+
+    topic_stats = tracker.get_topic_stats()
+    if topic_stats:
+        st.markdown("### 📚 Topic Breakdown")
+        for topic, result in topic_stats.items():
+            accuracy = (result['correct'] / result['total']) * 100 if result['total'] else 0
+            st.markdown(f"- **{topic.title()}**: {result['correct']} / {result['total']} correct ({accuracy:.1f}%)")
+
+    st.markdown("### 📤 Export Session Log")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Export as JSON"):
+            path = memory.export_json()
+            st.success(f"✅ Saved to {path}")
+    with col2:
+        if st.button("Export as CSV"):
+            path = memory.export_csv()
+            st.success(f"✅ Saved to {path}")
 
 elif mode == "Session Log":
     st.subheader("📝 Session Activity Log")
