@@ -1,3 +1,0 @@
-Question: A train leaves at 3:00 PM and arrives at 7:00 PM. How long is the journey?
-
-Answer: 7 - 3 = 4 hours. The train journey is 4 hours long.

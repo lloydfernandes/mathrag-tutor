@@ -1,0 +1,15 @@
+Milestone 2
+	1.	📈 Export + Visualize Progress
+	•	Export session logs to CSV/JSON
+	•	Show correct/incorrect stats
+	•	Add progress charts
+	2.	📘 Adaptive Practice Agent
+	•	Track weak topics
+	•	Suggest follow-up questions
+	3.	🎥 Visual Explanation Agent
+	•	Use LaTeX or Matplotlib to generate diagrams
+	4.	📂 Assignment Upload + Grading
+	•	Upload assignment files
+	•	Auto-grade questions in batch
+	5.	🧪 Improve Grader Intelligence
+	•	Let LLM grade the logic/steps, not just final answer
